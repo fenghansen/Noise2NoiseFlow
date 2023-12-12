@@ -19,40 +19,41 @@ class SdnModelScale(nn.Module):
         super(SdnModelScale, self).__init__()
         self.c_i, self.beta1_i, self.beta2_i, self.gain_params_i, self.cam_params_i = param_inits
 
-        # cam params
-        self.n_param_per_cam = 3  # for scaling beta1, beta2, and gain
+        # 相机参数: 将相机参数和增益参数设置为可学习的 nn.Parameter，以便在训练中进行调整。
+        self.n_param_per_cam = 3  # 用于缩放 beta1、beta2 和 gain
         self.cam_vals = torch.tensor([0, 1, 2, 3, 4], dtype=torch.float32)  # 'IP', 'GP', 'S6', 'N6', 'G4'
         self.cam_params = nn.Parameter(torch.tensor(self.cam_params_i), requires_grad=True)
 
-        # gain params
+        # 增益参数: 根据输入的 clean 图像、ISO 和相机类型，计算动态的缩放系数、增益以及两个 beta 参数。
         self.iso_vals = torch.tensor([100, 400, 800, 1600, 3200], dtype=torch.float32)
         self.gain_params = nn.Parameter(torch.tensor(self.gain_params_i), requires_grad=True)  # -5.0 / c_i
 
         self.beta1 = nn.Parameter(torch.tensor(self.beta1_i), requires_grad=True) # -5.0 / c_i
         self.beta2 = nn.Parameter(torch.tensor(self.beta2_i), requires_grad=True) # 0.0
 
+    # 参数计算: 使用相机类型和ISO值的索引计算相机参数和增益参数，进行一定的缩放和指数变换。
     def forward(self, clean, iso, cam):
+        # 相机索引
         cam_idx = torch.where(self.cam_vals.to(clean.device) == cam[0, 0, 0, 0])
         cam_one_hot = F.one_hot(cam_idx[0], self.cam_vals.shape[0])
         one_cam_params = torch.sum(cam_one_hot * self.cam_params, dim=1)
         one_cam_params = torch.exp(self.c_i * one_cam_params)
         
+        # ISO 索引
         iso_idx = torch.where(self.iso_vals.to(clean.device) == iso[0, 0, 0, 0])
         gain_one_hot = F.one_hot(iso_idx[0], self.iso_vals.shape[0])
         g = torch.sum(gain_one_hot * self.gain_params)
         gain = torch.exp(self.c_i * g * one_cam_params[2]) * iso
 
-        
+        # Beta1 和 Beta2 计算
         beta1 = torch.exp(self.c_i * self.beta1 * one_cam_params[0])
         beta2 = torch.exp(self.c_i * self.beta2 * one_cam_params[1])
 
+        # 噪声缩放: 根据计算得到的参数，对输入的 clean 图像进行噪声缩放操作，并确保缩放后的值非负。
         scale = beta1 * clean / gain + beta2
         assert torch.min(scale) >= 0
         return torch.sqrt(scale)
 
-        # scale = torch.sqrt(beta1 * clean / gain + beta2)
-    
-        # return scale
 
 class SdnModelLogScaleExp2(nn.Module):
     def __init__(self, gain_scale, param_inits=False, name='sdn_scale', device='cpu'):

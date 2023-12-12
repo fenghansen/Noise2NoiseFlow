@@ -121,7 +121,7 @@ def extract_nlf(meta_path):
     return nlf0, nlf1
 
 def extract_iso_cam(file_path):
-    fparts = file_path.split('/')
+    fparts = file_path.replace('\\','/').split('/')
     sdir = fparts[-3]
     if len(sdir) != 30:
         sdir = fparts[-2]  # if subdirectory does not exist

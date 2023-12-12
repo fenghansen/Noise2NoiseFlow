@@ -12,6 +12,13 @@ For conditions of distribution and use, see the accompanying LICENSE.md file.
 """
 import argparse
 
+'''
+python train_noise_flow.py --arch "sdn|unc|unc|unc|unc|gain|unc|unc|unc|unc" \
+    --sidd_path '../data/SIDD_Medium_Raw/Data' \
+    --epochs 2000  --n_batch_train 138 --n_batch_test 138  --n_patches_per_image 2898 \
+    --patch_height 32 --patch_sampling uniform  --n_channels 4 --epochs_full_valid 10 \
+    --no_resume --logdir noiseflow --do_sample --lu_decomp
+'''
 
 def arg_parser():
     parser = argparse.ArgumentParser()

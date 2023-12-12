@@ -17,6 +17,7 @@ import sys
 import os
 import logging
 from numpy import save, load
+from tqdm import tqdm
 
 class PatchStatsCalculator:
 
@@ -61,7 +62,7 @@ class PatchStatsCalculator:
     def calc_patch_stats(self):
         n_pat = 0  # number of patches
         
-        for image in self.dataset:
+        for image in tqdm(self.dataset):
             for idx in range(image['noise'].shape[0]):
                 self.stats['in_vr'] = self.online_var_step(self.stats['in_vr'], self.stats['in_mu'], n_pat, image['noise'][idx])
                 self.stats['clean_vr'] = self.online_var_step(self.stats['clean_vr'], self.stats['clean_mu'], n_pat, image['clean'][idx])

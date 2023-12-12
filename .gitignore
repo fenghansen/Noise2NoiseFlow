@@ -1,0 +1,11 @@
+experiments/
+__pycache__/
+*/__pycache__
+*.pth
+*.pyc
+*.pyd
+*.pyo
+*.so
+*.dll
+*.exe
+*.e
